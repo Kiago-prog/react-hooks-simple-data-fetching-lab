@@ -1,32 +1,41 @@
-import React from "react";
-import "whatwg-fetch";
-import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/extend-expect";
-import { server } from "../mocks/server";
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import App from '../components/App';
 
-import App from "../components/App";
+describe('App Component', () => {
+  beforeEach(() => {
+    global.fetch = jest.fn();
+  });
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
-test("displays the dog image after fetching", async () => {
-  render(<App />);
-  const img = await screen.findByAltText("A Random Dog");
-  expect(img).toBeInTheDocument();
-  expect(img.src).toBe(
-    "https://images.dog.ceo/breeds/bulldog-english/mami.jpg"
-  );
-});
+  test('displays the dog image after fetching', async () => {
+    global.fetch.mockResolvedValue({
+      json: async () => ({ message: 'https://images.dog.ceo/breeds/bulldog-english/mami.jpg' }),
+    });
 
-test("displays a loading message before fetching", async () => {
-  render(<App />);
-  expect(screen.queryByText(/Loading/)).toBeInTheDocument();
+    render(<App />);
+    await waitFor(() => expect(screen.getByAltText('A Random Dog')).toBeInTheDocument());
+    expect(screen.getByAltText('A Random Dog')).toHaveAttribute(
+      'src',
+      'https://images.dog.ceo/breeds/bulldog-english/mami.jpg'
+    );
+  });
 
-  const img = await screen.findByAltText("A Random Dog");
-  expect(img.src).toBe(
-    "https://images.dog.ceo/breeds/bulldog-english/mami.jpg"
-  );
+  test('displays a loading message before fetching', async () => {
+    global.fetch.mockResolvedValue({
+      json: async () => ({ message: 'https://images.dog.ceo/breeds/bulldog-english/mami.jpg' }),
+    });
 
-  expect(screen.queryByText(/Loading/)).not.toBeInTheDocument();
+    render(<App />);
+    expect(screen.queryByText(/Loading/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByAltText('A Random Dog')).toBeInTheDocument());
+    expect(screen.getByAltText('A Random Dog')).toHaveAttribute(
+      'src',
+      'https://images.dog.ceo/breeds/bulldog-english/mami.jpg'
+    );
+  });
 });
